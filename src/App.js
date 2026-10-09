@@ -2,15 +2,21 @@ import express from 'express'
 import cors from'cors'
 import cookieParser from 'cookie-parser'
 
-const App = express()
+const app = express()
 
-App.use(cors({
+app.use(cors({
     origin: process.env.CORS_ORIGIN,
     Credentails: true
 }))
-App.use(express.json({limit: "16kb"}))
-App.user(express.urlencoded({extended: true,limit: "16kb"}))
-App.user(express.static("public"))
-App.use(cookieParser())
+app.use(express.json({limit: "16kb"}))
+app.use(express.urlencoded({extended: true,limit: "16kb"}))
+app.use(express.static("public"))
+app.use(cookieParser())
 
-export {App}
+
+// routes import
+import userRouter from './routes/user.routes.js';
+
+// routes declaration
+app.use("/api/v1/users",userRouter) //userRouter controller
+export {app}
