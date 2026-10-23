@@ -1,8 +1,7 @@
 import {v2 as cloudinary} from 'cloudinary';
-import fs from 'fs'; // fs is filesystem jo ki nodejs me already hota no need to install
+import { unlink } from 'node:fs/promises';
 // it is used read,write,delete file etc all file operations of file handling
 
-import { v2 as cloudinary } from 'cloudinary';
 
     // Configuration
     cloudinary.config({ 
@@ -12,22 +11,35 @@ import { v2 as cloudinary } from 'cloudinary';
     });
 
     const uploadOnCloudinary = async (localFilepath) => {
-        try{
-            if(!localFilepath) return null
-            //upload the file on cloudinary
-        const response = await cloudinary.uploader.upload(localFilepath, {
+        if(!localFilepath) return null
+
+        let response;
+        let uploadError;
+        try {
+            response = await cloudinary.uploader.upload(localFilepath, {
                 resource_type: "auto"
             })
-        
-        //file has been uploaded successfully
-        console.log("file is uploaded on cloudinary",
-        response.url);
-        return response;
+        } catch (error) {
+            uploadError = error;
         }
-        catch(error){
-            fs.unlinkSync(localFilepath) // remove the locally saved temp. file as the upload operation get failed
-            return null;
 
+        try {
+            await unlink(localFilepath);
+        } catch (cleanupError) {
+            if (cleanupError.code !== "ENOENT") {
+                if (uploadError) {
+                    console.error("Failed to remove local upload file:", cleanupError);
+                } else {
+                    throw cleanupError;
+                }
+            }
         }
+
+        if (uploadError) {
+            throw uploadError;
+        }
+
+         console.log("file is uploaded on cloudinary", response.url);
+         return response;
     }
     export {uploadOnCloudinary}
